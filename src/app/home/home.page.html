@@ -17,9 +17,11 @@
   </ion-header>
 
   <div id="container">
-    <app-timer></app-timer>
+    <app-timer #timer [duration]="0.5" (endOfTime)="onEndOfTime()"></app-timer>
     <!-- <strong>Ready to create an app?</strong>
     <p>Start with Ionic <a target="_blank" rel="noopener noreferrer"
         href="https://ionicframework.com/docs/components">UI Components</a></p> -->
+
+    <ion-button (click)="timer.start()"></ion-button>
   </div>
 </ion-content>
