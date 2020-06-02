@@ -1,4 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Observable, noop } from 'rxjs';
 
 @Component({
   selector: 'app-timer',
@@ -24,33 +25,45 @@ export class TimerComponent implements OnInit {
       return;
     }
 
-    setTimeout(() => {
-      this.running = true;
+    this.running = true;
 
-      const timeTotal = this.duration * 60; /* how long the timer will run (seconds) */
-      const initialOffset = 440;
-      let fillIndex = 1;
+    const timeTotal = this.duration * 60; /* how long the timer will run (seconds) */
+    const initialOffset = 440;
 
       /* Need initial run as interval hasn't yet occured... */
-      this.stroke = initialOffset - (1 * (initialOffset / timeTotal));
-      this.timerValue = this.getTimerValue(timeTotal - fillIndex);
+    this.stroke = initialOffset - (1 * (initialOffset / timeTotal));
+    this.timerValue = this.getTimerValue(timeTotal);
+
+    this.initTimer(timeTotal).subscribe(fillIndex => 
+      {
+        this.timerValue = this.getTimerValue(timeTotal - fillIndex);
+        this.stroke = initialOffset - ((fillIndex + 1) * (initialOffset / timeTotal));
+      },
+      noop,
+      () => {
+        this.running = false;
+        this.endOfTime.emit();
+      }
+    )
+  }
+
+  private initTimer(timeTotal: number) {
+    return Observable.create(subscriber => {
+      let fillIndex = 0;
 
       const interval = setInterval(() => {
-        this.timerValue = this.getTimerValue(timeTotal - fillIndex);
 
         if (fillIndex === timeTotal) {
           clearInterval(interval);
-          this.running = false;
-          this.endOfTime.emit();
+          subscriber.complete();
           return;
         }
 
-        this.stroke = initialOffset - ((fillIndex + 1) * (initialOffset / timeTotal));
-
         fillIndex++;
-      }, 1000);
 
-    }, 0);
+        subscriber.next(fillIndex);
+      }, 1000);
+    })
   }
 
   private getTimerValue(time: number): string {
